@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>grooow - 小红书文案生成工具</title>
+    <link rel="icon" href="logo.jpg">
+    <link rel="apple-touch-icon" href="icon.jpg">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="apple-touch-icon" href="https://api.iconify.design/ph/plant-fill.svg?color=%23ff2442&width=192&height=192">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.staticfile.net/vue/3.3.4/vue.global.min.js"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <script>tailwind.config = { theme: { extend: { colors: { xhs: { DEFAULT: '#ff2442', hover: '#e01f39' } } } } }</script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans text-gray-800">
+<div id="app" class="max-w-5xl mx-auto px-4 py-8">
+    <header class="text-center mb-10">
+        <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight flex items-center justify-center gap-2">
+            <iconify-icon icon="ph:plant-fill" class="text-xhs"></iconify-icon> grooow
+        </h1>
+        <p class="text-gray-500 mt-2 text-lg">基于图片和描述，一键生成爆款小红书文案 🚀</p>
+    </header>
+
+    <main class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-6">
+            <h2 class="text-xl font-bold flex items-center gap-2">
+                <iconify-icon icon="ph:pencil-line-bold" class="text-xhs"></iconify-icon> 提供创作灵感
+            </h2>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">上传主图 (可选)</label>
+                <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-xhs hover:bg-red-50 transition-colors relative"
+                    @click="triggerFileInput" @dragover.prevent="dragOver = true" @dragleave.prevent="dragOver = false" @drop.prevent="handleDrop" :class="{'border-xhs bg-red-50': dragOver}">
+                    <input type="file" ref="fileInput" class="hidden" accept="image/*" @change="handleImageUpload">
+                    <div v-if="!imagePreview" class="flex flex-col items-center gap-2 text-gray-500">
+                        <iconify-icon icon="ph:image" class="text-4xl"></iconify-icon>
+                        <p class="text-sm">点击或拖拽图片到此处</p>
+                    </div>
+                    <div v-else class="relative w-full h-48">
+                        <img :src="imagePreview" alt="预览图" class="w-full h-full object-contain rounded-lg">
+                        <button @click.stop="clearImage" class="absolute -top-3 -right-3 bg-white text-gray-500 hover:text-red-500 rounded-full p-1 shadow">
+                            <iconify-icon icon="ph:x-circle-fill" class="text-2xl"></iconify-icon>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="relative group">
+                <label class="block text-sm text-gray-600 mb-2 flex justify-between items-center font-medium">
+                    <span>分享文案灵感 <span class="text-red-500">*</span></span>
+                    <span class="text-xs text-gray-400 font-normal opacity-0 group-hover:opacity-100 transition-opacity">越详细，AI 越懂你 ✨</span>
+                </label>
+                <textarea v-model="description" rows="5" maxlength="500"
+                    class="w-full bg-gray-50/80 border border-gray-100 rounded-2xl p-4 focus:bg-white focus:ring-[4px] focus:ring-red-50 focus:border-red-200 hover:border-red-100 outline-none resize-none transition-all duration-300 text-gray-700 placeholder-gray-400 text-base shadow-sm hover:shadow" 
+                    placeholder="写下你的灵感或核心卖点...&#10;例如：周末去打卡了一家超隐秘的中古店，风格复古很出片，忍不住买了好多小玩意！📸"></textarea>
+                <div class="absolute bottom-4 right-4 pointer-events-none transition-all duration-300 transform translate-y-1 opacity-0" :class="{ 'translate-y-0 opacity-100': description.length > 0 }">
+                    <span class="bg-white text-gray-500 text-xs px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm border border-gray-100">
+                        <iconify-icon icon="ph:pencil-simple"></iconify-icon> {{ description.length }} / 500
+                    </span>
+                </div>
+            </div>
+            <button @click="generateCopy" :disabled="isGenerating || !description.trim()" class="w-full bg-xhs hover:bg-xhs-hover text-white font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                <iconify-icon v-if="isGenerating" icon="ph:spinner-bold" class="animate-spin"></iconify-icon>
+                <iconify-icon v-else icon="ph:magic-wand-bold"></iconify-icon>
+                {{ isGenerating ? 'AI大脑正在深度思考中...' : '一键生成文案' }}
+            </button>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-full">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <iconify-icon icon="ph:sparkle-bold" class="text-xhs"></iconify-icon> 生成结果
+                </h2>
+                <button v-if="generatedText" @click="copyText" class="text-sm text-gray-600 hover:text-xhs flex items-center gap-1 transition-colors">
+                    <iconify-icon :icon="copySuccess ? 'ph:check-bold' : 'ph:copy-bold'" :class="copySuccess ? 'text-green-500' : ''"></iconify-icon>
+                    {{ copySuccess ? '已复制！' : '一键复制' }}
+                </button>
+            </div>
+            <div class="flex-grow bg-gray-50 rounded-xl border border-gray-100 p-4 relative overflow-y-auto max-h-[500px]">
+                <div v-if="!generatedText && !isGenerating" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
+                    <iconify-icon icon="ph:article-thin" class="text-6xl mb-2"></iconify-icon>
+                    <p>专属爆款文案将在这里显示...</p>
+                </div>
+                <div v-if="isGenerating" class="animate-pulse flex flex-col gap-4">
+                    <div class="h-6 bg-gray-200 rounded w-3/4"></div><div class="h-4 bg-gray-200 rounded w-full"></div><div class="h-4 bg-gray-200 rounded w-5/6"></div>
+                </div>
+                <div v-if="generatedText && !isGenerating" class="whitespace-pre-wrap leading-relaxed text-gray-800">{{ generatedText }}</div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    const { createApp, ref } = Vue;
+    createApp({
+        setup() {
+            // ==========================================
+            // ⚠️ 请在这里填入你的 Google API Key ⚠️
+            const API_KEY = 'AIzaSyCqDmkxTUeMdmkL8gGwcHp5UAhHQ2yT-40'; 
+            // ==========================================
+
+            const fileInput = ref(null), imageFile = ref(null), imagePreview = ref(''), description = ref(''), isGenerating = ref(false), generatedText = ref(''), dragOver = ref(false), copySuccess = ref(false);
+            
+            const triggerFileInput = () => { if(!imagePreview.value) fileInput.value.click(); };
+            const handleImageUpload = (e) => processFile(e.target.files[0]);
+            const handleDrop = (e) => { dragOver.value = false; processFile(e.dataTransfer.files[0]); };
+            
+            const processFile = (file) => {
+                if (file && file.type.startsWith('image/')) {
+                    imageFile.value = file;
+                    imagePreview.value = URL.createObjectURL(file);
+                } else alert('请上传有效的图片文件！');
+            };
+            
+            const clearImage = () => { imageFile.value = null; imagePreview.value = ''; if(fileInput.value) fileInput.value.value = ''; };
+            
+            const fileToBase64 = (file) => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = () => resolve(reader.result.split(',')[1]);
+                    reader.onerror = error => reject(error);
+                });
+            };
+
+            const generateCopy = async () => {
+                if (API_KEY === '在这里填入你的_API_KEY') {
+                    alert('请先在代码中填入你的 API Key！');
+                    return;
+                }
+
+                isGenerating.value = true; 
+                generatedText.value = ''; 
+                copySuccess.value = false;
+                
+                try {
+                    const promptText = `你是一个深谙小红书爆款逻辑的顶级文案专家。请根据我提供的描述（以及图片，如果有的话），为我生成小红书文案。
+                    
+                    【严格执行以下规则】：
+                    1. 绝对小红书风：带入真实博主的主观分享口吻，语气要充满活力与感染力。
+                    2. 灵魂 Emoji 排版：【大量并且巧妙地】在句首、句中和句末穿插 Emoji（如 ✨🔥📸💡🎀），让整个排版充满网感！
+                    3. 空行与留白：多用短句并频繁换行，使用恰当的符号作分界，视觉上必须要清爽透气。
+                    4. 拒绝废话与前缀：直接输出最终文案内容，绝不说“没问题”等客套话，不要带“标题：”、“正文：”等字眼。
+                    
+                    我的描述和要求是：${description.value}`;
+
+                    const requestBody = { contents: [{ parts: [{ text: promptText }] }] };
+
+                    if (imageFile.value) {
+                        const base64Data = await fileToBase64(imageFile.value);
+                        requestBody.contents[0].parts.push({
+                            inline_data: { mime_type: imageFile.value.type, data: base64Data }
+                        });
+                    }
+
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(requestBody)
+                    });
+
+                    const data = await response.json();
+
+                    if (data.error) throw new Error(data.error.message);
+                    generatedText.value = data.candidates[0].content.parts[0].text;
+
+                } catch (error) {
+                    console.error('AI 生成出错:', error);
+                    generatedText.value = "抱歉，生成失败了。错误信息：" + error.message;
+                } finally {
+                    isGenerating.value = false;
+                }
+            };
+
+            const copyText = async () => {
+                try { await navigator.clipboard.writeText(generatedText.value); copySuccess.value = true; setTimeout(() => copySuccess.value = false, 2000); } 
+                catch (err) { alert('复制失败，请手动复制。'); }
+            };
+            
+            return { fileInput, imagePreview, description, isGenerating, generatedText, dragOver, copySuccess, triggerFileInput, handleImageUpload, handleDrop, clearImage, generateCopy, copyText };
+        }
+    }).mount('#app');
+
+    // 注册 Service Worker，支持 PWA (添加到桌面)
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('Service Worker 注册成功，PWA 已启用！', reg.scope))
+                .catch(err => console.log('Service Worker 注册失败:', err));
+        });
+    }
+</script>
+</body>
+</html>

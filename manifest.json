@@ -1,0 +1,20 @@
+{
+  "name": "grooow - 小红书文案",
+  "short_name": "grooow",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ff2442",
+  "icons": [
+    {
+      "src": "https://api.iconify.design/ph/plant-fill.svg?color=%23ff2442&width=192&height=192",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "https://api.iconify.design/ph/plant-fill.svg?color=%23ff2442&width=512&height=512",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
