@@ -345,23 +345,4 @@ ${categoryTags.join(' ')}`;
     }
 </script>
 </body>
-</html>      const copyText = async () => {
-                try { await navigator.clipboard.writeText(generatedText.value); copySuccess.value = true; setTimeout(() => copySuccess.value = false, 2000); } 
-                catch (err) { alert('复制失败，请手动复制。'); }
-            };
-            
-            return { fileInput, imagePreview, description, isGenerating, generatedText, dragOver, copySuccess, triggerFileInput, handleImageUpload, handleDrop, clearImage, generateCopy, copyText };
-        }
-    }).mount('#app');
-
-    // 注册 Service Worker，支持 PWA (添加到桌面)
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('Service Worker 注册成功，PWA 已启用！', reg.scope))
-                .catch(err => console.log('Service Worker 注册失败:', err));
-        });
-    }
-</script>
-</body>
 </html>
