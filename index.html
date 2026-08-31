@@ -2,125 +2,603 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>grooow - 小红书文案生成工具</title>
-    <link rel="icon" href="logo.jpg">
-    <link rel="apple-touch-icon" href="icon.jpg">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>grooow - 小红书爆款文案生成器</title>
+    
+    <!-- PWA & Mobile Meta Tags -->
+    <meta name="theme-color" content="#FF2442">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <link rel="apple-touch-icon" href="https://api.iconify.design/ph/plant-fill.svg?color=%23ff2442&width=192&height=192">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="grooow">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23FF2442'/><path d='M35 65 C35 45 45 35 65 35 C65 55 55 65 35 65 Z' fill='%23FFFFFF'/><path d='M35 65 C45 65 55 60 60 50' stroke='%23FF2442' stroke-width='4' fill='none'/><circle cx='50' cy='30' r='5' fill='%23FFD13B'/></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%23FF2442'/><path d='M35 65 C35 45 45 35 65 35 C65 55 55 65 35 65 Z' fill='%23FFFFFF'/><path d='M35 65 C45 65 55 60 60 50' stroke='%23FF2442' stroke-width='4' fill='none'/><circle cx='50' cy='30' r='5' fill='%23FFD13B'/></svg>">
+
+    <!-- CSS & Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.staticfile.net/vue/3.3.4/vue.global.min.js"></script>
-    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
-    <script>tailwind.config = { theme: { extend: { colors: { xhs: { DEFAULT: '#ff2442', hover: '#e01f39' } } } } }</script>
+    <script src="https://cdn.staticfile.net/vue/3.3.4/vue.global.prod.js"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        xhs: {
+                            DEFAULT: '#FF2442',
+                            light: '#FFF0F2',
+                            dark: '#E01633',
+                            border: '#FFD6DC',
+                            hover: '#FA1837'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(255, 36, 66, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04)',
+                        'card': '0 10px 30px -5px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 25px rgba(255, 36, 66, 0.35)'
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        ::-webkit-scrollbar { width: 6px; }
+        /* Safe Area Support for iPhone Notch / Dynamic Island */
+        body {
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #D1D5DB; }
+
+        /* Animation utilities */
+        @keyframes bounce-subtle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        .animate-subtle-bounce {
+            animation: bounce-subtle 2s infinite ease-in-out;
+        }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen font-sans text-gray-800">
-<div id="app" class="max-w-5xl mx-auto px-4 py-8">
-    <header class="text-center mb-10">
-        <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight flex items-center justify-center gap-2">
-            <iconify-icon icon="ph:plant-fill" class="text-xhs"></iconify-icon> grooow
-        </h1>
-        <p class="text-gray-500 mt-2 text-lg">基于图片和描述，一键生成爆款小红书文案 🚀</p>
+<body class="bg-gradient-to-b from-[#FFF5F6] via-[#FAF9F9] to-[#F5F5F7] min-h-screen text-gray-800 font-sans antialiased selection:bg-red-100 selection:text-red-700">
+
+<div id="app" class="max-w-4xl mx-auto px-4 py-4 md:py-8" v-cloak>
+    
+    <!-- Top Navigation / App Header -->
+    <header class="flex items-center justify-between mb-6 bg-white/80 backdrop-blur-md sticky top-2 z-30 px-4 py-3 rounded-2xl border border-white shadow-soft">
+        <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-xhs to-[#FF6B81] flex items-center justify-center text-white shadow-md shadow-red-200">
+                <iconify-icon icon="ph:plant-bold" class="text-2xl"></iconify-icon>
+            </div>
+            <div>
+                <h1 class="text-xl font-black tracking-tight text-gray-900 flex items-center gap-1.5">
+                    grooow <span class="text-xs px-2 py-0.5 rounded-full bg-xhs-light text-xhs font-bold border border-xhs-border">2.0 Pro</span>
+                </h1>
+                <p class="text-xs text-gray-500 font-medium">小红书 AI 爆款文案工坊</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <!-- PWA Install Guide Button -->
+            <button @click="showInstallModal = true" 
+                    class="flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 transition">
+                <iconify-icon icon="ph:device-mobile-camera-bold" class="text-base text-xhs"></iconify-icon>
+                <span class="hidden sm:inline">安装到手机</span>
+                <span class="sm:hidden">手机版</span>
+            </button>
+
+            <!-- History Button -->
+            <button @click="showHistoryModal = true" 
+                    class="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 transition relative"
+                    title="历史记录">
+                <iconify-icon icon="ph:clock-counter-clockwise-bold" class="text-lg"></iconify-icon>
+                <span v-if="historyList.length > 0" class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-xhs rounded-full ring-2 ring-white"></span>
+            </button>
+
+            <!-- Settings Button -->
+            <button @click="showSettingsModal = true" 
+                    :class="apiKey ? 'bg-gray-100 hover:bg-gray-200 text-gray-700' : 'bg-red-500 text-white animate-pulse shadow-md shadow-red-300'"
+                    class="flex items-center gap-1 text-xs font-semibold px-3 py-2 rounded-xl transition">
+                <iconify-icon icon="ph:gear-six-bold" class="text-lg"></iconify-icon>
+                <span v-if="!apiKey" class="font-bold">配置 Key</span>
+                <span v-else class="hidden sm:inline">设置</span>
+            </button>
+        </div>
     </header>
 
-    <main class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-6">
-            <h2 class="text-xl font-bold flex items-center gap-2">
-                <iconify-icon icon="ph:pencil-line-bold" class="text-xhs"></iconify-icon> 提供创作灵感
-            </h2>
+    <!-- Missing Key Alert Banner (if not set) -->
+    <div v-if="!apiKey" class="mb-6 p-4 rounded-2xl bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 shadow-soft flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-red-100 text-xhs flex items-center justify-center shrink-0">
+                <iconify-icon icon="ph:key-bold" class="text-xl"></iconify-icon>
+            </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">上传主图 (可选)</label>
-                <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-xhs hover:bg-red-50 transition-colors relative"
-                    @click="triggerFileInput" @dragover.prevent="dragOver = true" @dragleave.prevent="dragOver = false" @drop.prevent="handleDrop" :class="{'border-xhs bg-red-50': dragOver}">
-                    <input type="file" ref="fileInput" class="hidden" accept="image/*" @change="handleImageUpload">
-                    <div v-if="!imagePreview" class="flex flex-col items-center gap-2 text-gray-500">
-                        <iconify-icon icon="ph:image" class="text-4xl"></iconify-icon>
-                        <p class="text-sm">点击或拖拽图片到此处</p>
+                <p class="text-sm font-bold text-red-900">首次使用，请先配置您的 Gemini API Key</p>
+                <p class="text-xs text-red-700 mt-0.5">免费获取，Key 仅保存在您当前设备本地，安全不泄露。</p>
+            </div>
+        </div>
+        <button @click="showSettingsModal = true" class="px-3.5 py-1.5 bg-xhs text-white text-xs font-bold rounded-xl shadow hover:bg-xhs-dark transition shrink-0">
+            立即配置
+        </button>
+    </div>
+
+    <!-- Main Workspace -->
+    <main class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Left Panel: Input & Controls -->
+        <section class="lg:col-span-6 flex flex-col gap-4">
+            <div class="bg-white rounded-3xl p-5 md:p-6 shadow-soft border border-gray-100 flex flex-col gap-5">
+                
+                <!-- Topic / Inspiration Input -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-sm font-bold text-gray-800 flex items-center gap-1.5">
+                            <iconify-icon icon="ph:pencil-simple-line-fill" class="text-xhs text-lg"></iconify-icon>
+                            创作主题 / 核心卖点 <span class="text-xhs">*</span>
+                        </label>
+                        <span class="text-xs text-gray-400 font-mono">{{ description.length }}/500</span>
                     </div>
-                    <div v-else class="relative w-full h-48">
-                        <img :src="imagePreview" alt="预览图" class="w-full h-full object-contain rounded-lg">
-                        <button @click.stop="clearImage" class="absolute -top-3 -right-3 bg-white text-gray-500 hover:text-red-500 rounded-full p-1 shadow">
-                            <iconify-icon icon="ph:x-circle-fill" class="text-2xl"></iconify-icon>
+                    <textarea 
+                        v-model="description" 
+                        rows="4" 
+                        maxlength="500"
+                        placeholder="输入你想分享的灵感、产品特点、探店体验或故事背景...&#10;例：周末在静安区发现了一家复古法式咖啡馆，开心果巴斯克绝了！拍照特别出片📸" 
+                        class="w-full bg-gray-50/80 border border-gray-200 rounded-2xl p-3.5 text-sm text-gray-800 placeholder-gray-400 focus:bg-white focus:border-xhs focus:ring-4 focus:ring-red-50 outline-none transition duration-200 resize-none"></textarea>
+                </div>
+
+                <!-- Image Upload (Multi-modal Vision) -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-sm font-bold text-gray-800 flex items-center gap-1.5">
+                            <iconify-icon icon="ph:image-square-fill" class="text-xhs text-lg"></iconify-icon>
+                            参考图片 <span class="text-xs text-gray-400 font-normal">（AI 将识别图片细节融入文案）</span>
+                        </label>
+                        <button v-if="imagePreview" @click="clearImage" class="text-xs text-red-500 hover:underline">移除图片</button>
+                    </div>
+
+                    <div v-if="!imagePreview" 
+                         @click="triggerFileInput"
+                         @dragover.prevent="dragOver = true" 
+                         @dragleave.prevent="dragOver = false" 
+                         @drop.prevent="handleDrop"
+                         :class="dragOver ? 'border-xhs bg-red-50/60' : 'border-gray-200 hover:border-xhs/60 hover:bg-gray-50'"
+                         class="border-2 border-dashed rounded-2xl p-4 text-center cursor-pointer transition flex flex-col items-center justify-center gap-1.5 py-6">
+                        <input type="file" ref="fileInput" class="hidden" accept="image/*" @change="handleImageUpload">
+                        <div class="w-10 h-10 rounded-full bg-red-50 text-xhs flex items-center justify-center">
+                            <iconify-icon icon="ph:camera-plus-bold" class="text-2xl"></iconify-icon>
+                        </div>
+                        <p class="text-xs font-semibold text-gray-700">点击拍照或上传图片</p>
+                        <p class="text-[11px] text-gray-400">支持 JPG、PNG、WebP 等常见格式</p>
+                    </div>
+
+                    <!-- Image Preview Card -->
+                    <div v-else class="relative rounded-2xl overflow-hidden border border-gray-200 bg-gray-900 group max-h-48 flex items-center justify-center">
+                        <img :src="imagePreview" alt="上传图片" class="w-full h-44 object-cover">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-3">
+                            <button @click="triggerFileInput" class="px-3 py-1.5 bg-white/90 text-gray-900 text-xs font-bold rounded-lg shadow hover:bg-white transition">更换</button>
+                            <button @click="clearImage" class="px-3 py-1.5 bg-red-500/90 text-white text-xs font-bold rounded-lg shadow hover:bg-red-600 transition">删除</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scenario & Style Presets -->
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-1.5">爆款场景分类</label>
+                        <div class="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
+                            <button v-for="cat in categories" :key="cat.id" 
+                                    @click="selectedCategory = cat.id"
+                                    :class="selectedCategory === cat.id ? 'bg-xhs text-white font-bold shadow-sm shadow-red-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium'"
+                                    class="text-xs py-2 px-1.5 rounded-xl transition text-center flex items-center justify-center gap-1">
+                                <span>{{ cat.icon }}</span>
+                                <span class="truncate">{{ cat.name }}</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 pt-2 border-t border-gray-100">
+                        <!-- Tone Preset -->
+                        <div>
+                            <label class="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-1.5">博主语气</label>
+                            <select v-model="selectedTone" class="w-full text-xs bg-gray-50 border border-gray-200 rounded-xl p-2 font-medium text-gray-700 outline-none focus:border-xhs">
+                                <option value="热情闺蜜">👭 热情闺蜜（真诚有感染力）</option>
+                                <option value="资深博主">💎 资深博主（专业干货满满）</option>
+                                <option value="幽默逗趣">😂 幽默逗趣（金句频出搞笑）</option>
+                                <option value="高级极简">🌿 高级极简（克制审美高级）</option>
+                                <option value="震惊避坑">🚨 震惊测评（突出反差避坑）</option>
+                            </select>
+                        </div>
+
+                        <!-- Emoji Density -->
+                        <div>
+                            <label class="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-1.5">Emoji 密度</label>
+                            <select v-model="emojiDensity" class="w-full text-xs bg-gray-50 border border-gray-200 rounded-xl p-2 font-medium text-gray-700 outline-none focus:border-xhs">
+                                <option value="high">✨ 网感爆棚（高密度）</option>
+                                <option value="medium">🎀 适度点缀（中等）</option>
+                                <option value="low">🌱 简约清爽（少 Emoji）</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button 
+                    @click="generateCopy" 
+                    :disabled="isGenerating || !description.trim()" 
+                    class="w-full bg-gradient-to-r from-xhs to-[#FF4D6D] hover:from-xhs-hover hover:to-[#FA385B] text-white font-bold py-3.5 px-6 rounded-2xl transition shadow-lg shadow-red-200 flex items-center justify-center gap-2.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none active:scale-[0.99]">
+                    <iconify-icon v-if="isGenerating" icon="ph:spinner-gap-bold" class="animate-spin text-xl"></iconify-icon>
+                    <iconify-icon v-else icon="ph:sparkle-fill" class="text-xl"></iconify-icon>
+                    <span class="text-base tracking-wide">{{ isGenerating ? 'AI 灵感引擎深度创作中...' : '一键生成小红书爆款文案' }}</span>
+                </button>
+
+            </div>
+        </section>
+
+        <!-- Right Panel: Output & Result -->
+        <section class="lg:col-span-6 flex flex-col gap-4">
+            <div class="bg-white rounded-3xl p-5 md:p-6 shadow-soft border border-gray-100 flex flex-col min-h-[480px]">
+                
+                <!-- Output Header -->
+                <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
+                    <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-xhs"></span>
+                        生成成果
+                    </h2>
+                    
+                    <div class="flex items-center gap-2" v-if="parsedResult">
+                        <button @click="copyFullPost" class="text-xs font-bold px-3 py-1.5 rounded-xl bg-xhs text-white shadow-sm hover:bg-xhs-hover transition flex items-center gap-1">
+                            <iconify-icon :icon="copiedField === 'all' ? 'ph:check-bold' : 'ph:copy-bold'"></iconify-icon>
+                            {{ copiedField === 'all' ? '已复制全文！' : '一键复制全文' }}
                         </button>
                     </div>
                 </div>
-            </div>
-            <div class="relative group">
-                <label class="block text-sm text-gray-600 mb-2 flex justify-between items-center font-medium">
-                    <span>分享文案灵感 <span class="text-red-500">*</span></span>
-                    <span class="text-xs text-gray-400 font-normal opacity-0 group-hover:opacity-100 transition-opacity">越详细，AI 越懂你 ✨</span>
-                </label>
-                <textarea v-model="description" rows="5" maxlength="500"
-                    class="w-full bg-gray-50/80 border border-gray-100 rounded-2xl p-4 focus:bg-white focus:ring-[4px] focus:ring-red-50 focus:border-red-200 hover:border-red-100 outline-none resize-none transition-all duration-300 text-gray-700 placeholder-gray-400 text-base shadow-sm hover:shadow" 
-                    placeholder="写下你的灵感或核心卖点...&#10;例如：周末去打卡了一家超隐秘的中古店，风格复古很出片，忍不住买了好多小玩意！📸"></textarea>
-                <div class="absolute bottom-4 right-4 pointer-events-none transition-all duration-300 transform translate-y-1 opacity-0" :class="{ 'translate-y-0 opacity-100': description.length > 0 }">
-                    <span class="bg-white text-gray-500 text-xs px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm border border-gray-100">
-                        <iconify-icon icon="ph:pencil-simple"></iconify-icon> {{ description.length }} / 500
-                    </span>
-                </div>
-            </div>
-            <button @click="generateCopy" :disabled="isGenerating || !description.trim()" class="w-full bg-xhs hover:bg-xhs-hover text-white font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50">
-                <iconify-icon v-if="isGenerating" icon="ph:spinner-bold" class="animate-spin"></iconify-icon>
-                <iconify-icon v-else icon="ph:magic-wand-bold"></iconify-icon>
-                {{ isGenerating ? 'AI大脑正在深度思考中...' : '一键生成文案' }}
-            </button>
-        </div>
 
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-full">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold flex items-center gap-2">
-                    <iconify-icon icon="ph:sparkle-bold" class="text-xhs"></iconify-icon> 生成结果
-                </h2>
-                <button v-if="generatedText" @click="copyText" class="text-sm text-gray-600 hover:text-xhs flex items-center gap-1 transition-colors">
-                    <iconify-icon :icon="copySuccess ? 'ph:check-bold' : 'ph:copy-bold'" :class="copySuccess ? 'text-green-500' : ''"></iconify-icon>
-                    {{ copySuccess ? '已复制！' : '一键复制' }}
+                <!-- Placeholder Empty State -->
+                <div v-if="!parsedResult && !isGenerating && !errorMessage" class="flex-1 flex flex-col items-center justify-center py-16 text-center text-gray-400">
+                    <div class="w-20 h-20 rounded-3xl bg-red-50 text-xhs flex items-center justify-center mb-4 animate-subtle-bounce">
+                        <iconify-icon icon="ph:newspaper-clipping-light" class="text-5xl"></iconify-icon>
+                    </div>
+                    <p class="text-base font-bold text-gray-700 mb-1">等待灵感注入 ✨</p>
+                    <p class="text-xs text-gray-400 max-w-xs leading-relaxed">在左侧输入主题或上传照片，AI 将为您智能生成结构化高点击率标题、排版正文和热门标签。</p>
+                </div>
+
+                <!-- Generating Loading State -->
+                <div v-if="isGenerating" class="flex-1 flex flex-col items-center justify-center py-16 space-y-4">
+                    <div class="relative flex items-center justify-center">
+                        <div class="w-16 h-16 rounded-full border-4 border-red-100 border-t-xhs animate-spin"></div>
+                        <iconify-icon icon="ph:plant-bold" class="text-2xl text-xhs absolute"></iconify-icon>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm font-bold text-gray-800">正在构思小红书爆款网感...</p>
+                        <p class="text-xs text-gray-400 mt-1">深度结合爆款标题公式与视觉排版 ✨</p>
+                    </div>
+                </div>
+
+                <!-- Error Message Banner -->
+                <div v-if="errorMessage && !isGenerating" class="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800 text-xs leading-relaxed flex flex-col gap-2">
+                    <div class="flex items-center gap-2 font-bold text-red-900 text-sm">
+                        <iconify-icon icon="ph:warning-circle-bold" class="text-lg text-red-600"></iconify-icon>
+                        生成遇到问题
+                    </div>
+                    <p>{{ errorMessage }}</p>
+                    <div class="flex gap-2 mt-2">
+                        <button @click="showSettingsModal = true" class="px-3 py-1.5 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition">
+                            检查/更换 API Key
+                        </button>
+                        <button @click="generateCopy" class="px-3 py-1.5 bg-white border border-red-300 text-red-700 rounded-lg font-bold hover:bg-red-50 transition">
+                            重试
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Result Display -->
+                <div v-if="parsedResult && !isGenerating" class="space-y-5 flex-1 overflow-y-auto">
+                    
+                    <!-- 1. Titles Section -->
+                    <div class="bg-gray-50/80 rounded-2xl p-4 border border-gray-100">
+                        <div class="flex items-center justify-between mb-2.5">
+                            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
+                                <iconify-icon icon="ph:target-bold" class="text-xhs"></iconify-icon> 爆款标题备选 (点击可一键复制)
+                            </span>
+                        </div>
+                        <div class="space-y-2">
+                            <div v-for="(title, idx) in parsedResult.titles" :key="idx" 
+                                 @click="copySingleText(title, 'title_' + idx)"
+                                 class="group flex items-center justify-between p-2.5 rounded-xl bg-white border border-gray-200/80 hover:border-xhs hover:bg-red-50/30 cursor-pointer transition">
+                                <div class="flex items-start gap-2 text-xs font-bold text-gray-800 leading-snug">
+                                    <span class="w-5 h-5 rounded-full bg-red-100 text-xhs text-[10px] flex items-center justify-center shrink-0 mt-0.5 font-black">{{ idx + 1 }}</span>
+                                    <span>{{ title }}</span>
+                                </div>
+                                <span class="text-[11px] font-semibold text-xhs shrink-0 opacity-0 group-hover:opacity-100 transition ml-2">
+                                    {{ copiedField === 'title_' + idx ? '已复制!' : '复制' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Content Body -->
+                    <div class="bg-gray-50/80 rounded-2xl p-4 border border-gray-100">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
+                                <iconify-icon icon="ph:article-bold" class="text-xhs"></iconify-icon> 正文排版
+                            </span>
+                            <button @click="copySingleText(parsedResult.body, 'body')" class="text-xs text-xhs font-bold hover:underline flex items-center gap-1">
+                                <iconify-icon :icon="copiedField === 'body' ? 'ph:check-bold' : 'ph:copy-bold'"></iconify-icon>
+                                {{ copiedField === 'body' ? '已复制正文' : '复制正文' }}
+                            </button>
+                        </div>
+                        <div class="bg-white rounded-xl p-4 border border-gray-200/80 text-sm leading-relaxed text-gray-800 whitespace-pre-wrap font-normal selection:bg-red-100">
+                            {{ parsedResult.body }}
+                        </div>
+                    </div>
+
+                    <!-- 3. Tags Section -->
+                    <div v-if="parsedResult.tags && parsedResult.tags.length > 0" class="bg-gray-50/80 rounded-2xl p-4 border border-gray-100">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
+                                <iconify-icon icon="ph:hash-bold" class="text-xhs"></iconify-icon> 推荐热门标签
+                            </span>
+                            <button @click="copySingleText(parsedResult.tags.join(' '), 'tags')" class="text-xs text-xhs font-bold hover:underline flex items-center gap-1">
+                                <iconify-icon :icon="copiedField === 'tags' ? 'ph:check-bold' : 'ph:copy-bold'"></iconify-icon>
+                                {{ copiedField === 'tags' ? '已复制标签' : '复制全部标签' }}
+                            </button>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5">
+                            <span v-for="(tag, tidx) in parsedResult.tags" :key="tidx" 
+                                  @click="copySingleText(tag, 'tag_' + tidx)"
+                                  class="text-xs px-2.5 py-1 rounded-lg bg-white border border-gray-200 text-blue-600 font-medium hover:border-blue-300 hover:bg-blue-50 cursor-pointer transition">
+                                {{ tag.startsWith('#') ? tag : '#' + tag }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Refine & Actions -->
+                    <div class="pt-2 flex flex-wrap items-center gap-2">
+                        <button @click="quickRefine('增加更多高赞 Emoji 和语气词')" class="text-xs py-1.5 px-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium transition">
+                            ✨ 更多 Emoji
+                        </button>
+                        <button @click="quickRefine('换一组更吸睛、制造反差感的爆款标题')" class="text-xs py-1.5 px-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium transition">
+                            🎯 换组标题
+                        </button>
+                        <button @click="quickRefine('精简篇幅，多用短句，更适合手机快速阅读')" class="text-xs py-1.5 px-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium transition">
+                            ✂️ 精简字数
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Settings Modal -->
+    <div v-if="showSettingsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-gray-100 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-200">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-xl bg-red-100 text-xhs flex items-center justify-center">
+                        <iconify-icon icon="ph:gear-six-bold" class="text-xl"></iconify-icon>
+                    </div>
+                    <h3 class="text-base font-bold text-gray-900">设置 & API 配置</h3>
+                </div>
+                <button @click="showSettingsModal = false" class="text-gray-400 hover:text-gray-600 p-1">
+                    <iconify-icon icon="ph:x-bold" class="text-lg"></iconify-icon>
                 </button>
             </div>
-            <div class="flex-grow bg-gray-50 rounded-xl border border-gray-100 p-4 relative overflow-y-auto max-h-[500px]">
-                <div v-if="!generatedText && !isGenerating" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
-                    <iconify-icon icon="ph:article-thin" class="text-6xl mb-2"></iconify-icon>
-                    <p>专属爆款文案将在这里显示...</p>
+
+            <div class="space-y-4">
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="text-xs font-bold text-gray-700">Google Gemini API Key <span class="text-xhs">*</span></label>
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-xs text-xhs font-semibold hover:underline flex items-center gap-0.5">
+                            免费获取 Key <iconify-icon icon="ph:arrow-square-out-bold"></iconify-icon>
+                        </a>
+                    </div>
+                    <input 
+                        type="password" 
+                        v-model="tempApiKey" 
+                        placeholder="AIzaSy..." 
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs text-gray-800 focus:bg-white focus:border-xhs outline-none font-mono">
+                    <p class="text-[11px] text-gray-500 mt-1.5 leading-relaxed">
+                        🔒 Key 将加密保存在您当前浏览器的本地存储中，不会上传到任何服务器或代码库。
+                    </p>
                 </div>
-                <div v-if="isGenerating" class="animate-pulse flex flex-col gap-4">
-                    <div class="h-6 bg-gray-200 rounded w-3/4"></div><div class="h-4 bg-gray-200 rounded w-full"></div><div class="h-4 bg-gray-200 rounded w-5/6"></div>
+
+                <div>
+                    <label class="text-xs font-bold text-gray-700 block mb-1.5">AI 模型选择</label>
+                    <select v-model="selectedModel" class="w-full text-xs bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-gray-700 outline-none focus:border-xhs">
+                        <option value="gemini-2.0-flash">Gemini 2.0 Flash (推荐，极速智能)</option>
+                        <option value="gemini-1.5-flash">Gemini 1.5 Flash (轻量高效)</option>
+                        <option value="gemini-1.5-pro">Gemini 1.5 Pro (深度推理)</option>
+                    </select>
                 </div>
-                <div v-if="generatedText && !isGenerating" class="whitespace-pre-wrap leading-relaxed text-gray-800">{{ generatedText }}</div>
+
+                <div>
+                    <label class="text-xs font-bold text-gray-700 block mb-1.5">API 接口端点 (可选/自定义代理)</label>
+                    <input 
+                        type="text" 
+                        v-model="customBaseUrl" 
+                        placeholder="https://generativelanguage.googleapis.com" 
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl p-2.5 text-xs text-gray-800 focus:bg-white focus:border-xhs outline-none font-mono">
+                    <p class="text-[11px] text-gray-400 mt-1">国内网络直连若受限，可配置反向代理域名，默认使用 Google 官方接口。</p>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+                <button @click="showSettingsModal = false" class="px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition">
+                    取消
+                </button>
+                <button @click="saveSettings" class="px-5 py-2 text-xs font-bold text-white bg-xhs hover:bg-xhs-hover rounded-xl shadow transition">
+                    保存配置
+                </button>
             </div>
         </div>
-    </main>
+    </div>
+
+    <!-- PWA Install Guide Modal -->
+    <div v-if="showInstallModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl border border-gray-100 flex flex-col gap-5">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-xl bg-red-100 text-xhs flex items-center justify-center">
+                        <iconify-icon icon="ph:device-mobile-camera-bold" class="text-xl"></iconify-icon>
+                    </div>
+                    <h3 class="text-base font-bold text-gray-900">添加到手机桌面 (PWA)</h3>
+                </div>
+                <button @click="showInstallModal = false" class="text-gray-400 hover:text-gray-600 p-1">
+                    <iconify-icon icon="ph:x-bold" class="text-lg"></iconify-icon>
+                </button>
+            </div>
+
+            <div class="space-y-4 text-xs text-gray-700 leading-relaxed">
+                <div class="p-3.5 bg-red-50/70 border border-red-100 rounded-2xl flex flex-col gap-1.5">
+                    <span class="font-bold text-red-900 flex items-center gap-1">
+                        <iconify-icon icon="ph:apple-logo-fill"></iconify-icon> 苹果 iPhone / iPad (Safari)
+                    </span>
+                    <ol class="list-decimal list-inside space-y-1 text-gray-700 pl-1">
+                        <li>在 Safari 浏览器中打开本网站</li>
+                        <li>点击屏幕底部的「分享」图标 <iconify-icon icon="ph:export-bold" class="inline"></iconify-icon></li>
+                        <li>向下滑动选择「<strong>添加到主屏幕</strong> ➕」</li>
+                        <li>即可在手机桌面生成专属图标，全屏流畅使用！</li>
+                    </ol>
+                </div>
+
+                <div class="p-3.5 bg-blue-50/70 border border-blue-100 rounded-2xl flex flex-col gap-1.5">
+                    <span class="font-bold text-blue-900 flex items-center gap-1">
+                        <iconify-icon icon="ph:android-logo-fill"></iconify-icon> 安卓 Android (Chrome / 浏览器)
+                    </span>
+                    <ol class="list-decimal list-inside space-y-1 text-gray-700 pl-1">
+                        <li>在 Chrome 浏览器中打开本网站</li>
+                        <li>点击右上角菜单「三个点 ⋮」</li>
+                        <li>点击「<strong>添加到主屏幕</strong>」或「安装应用」</li>
+                    </ol>
+                </div>
+            </div>
+
+            <button @click="showInstallModal = false" class="w-full py-2.5 text-xs font-bold text-white bg-xhs hover:bg-xhs-hover rounded-xl shadow transition">
+                我知道了
+            </button>
+        </div>
+    </div>
+
+    <!-- History Drawer Modal -->
+    <div v-if="showHistoryModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl border border-gray-100 flex flex-col gap-4 max-h-[85vh]">
+            <div class="flex items-center justify-between pb-2 border-b border-gray-100">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-xl bg-gray-100 text-gray-700 flex items-center justify-center">
+                        <iconify-icon icon="ph:clock-counter-clockwise-bold" class="text-lg"></iconify-icon>
+                    </div>
+                    <h3 class="text-base font-bold text-gray-900">创作历史记录 ({{ historyList.length }})</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button v-if="historyList.length > 0" @click="clearHistory" class="text-xs text-red-500 hover:underline">清空记录</button>
+                    <button @click="showHistoryModal = false" class="text-gray-400 hover:text-gray-600 p-1">
+                        <iconify-icon icon="ph:x-bold" class="text-lg"></iconify-icon>
+                    </button>
+                </div>
+            </div>
+
+            <div v-if="historyList.length === 0" class="py-12 text-center text-gray-400 text-xs">
+                暂无历史记录，生成过的文案会自动保存在这里哦 📝
+            </div>
+
+            <div v-else class="space-y-3 overflow-y-auto pr-1 flex-1">
+                <div v-for="(item, hidx) in historyList" :key="hidx" class="p-3.5 rounded-2xl bg-gray-50 border border-gray-100 hover:border-gray-200 transition flex flex-col gap-2">
+                    <div class="flex items-center justify-between text-[11px] text-gray-400 font-medium">
+                        <span class="px-2 py-0.5 rounded-md bg-white border border-gray-200 text-gray-600">{{ item.category || '爆款文案' }}</span>
+                        <span>{{ item.time }}</span>
+                    </div>
+                    <p class="text-xs font-bold text-gray-800 line-clamp-1">💡 {{ item.prompt }}</p>
+                    <div class="flex items-center justify-end gap-2 pt-1">
+                        <button @click="loadHistoryItem(item)" class="text-xs text-xhs font-bold hover:underline">查看内容</button>
+                        <button @click="deleteHistoryItem(hidx)" class="text-xs text-gray-400 hover:text-red-500">删除</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
+<!-- Application Logic -->
 <script>
-    const { createApp, ref } = Vue;
+    const { createApp, ref, onMounted } = Vue;
+
     createApp({
         setup() {
-            // ==========================================
-            // ⚠️ 请在这里填入你的 Google API Key ⚠️
-            const API_KEY = 'AIzaSyCqDmkxTUeMdmkL8gGwcHp5UAhHQ2yT-40'; 
-            // ==========================================
+            // State
+            const apiKey = ref(localStorage.getItem('grooow_gemini_api_key') || '');
+            const tempApiKey = ref(apiKey.value);
+            const selectedModel = ref(localStorage.getItem('grooow_model') || 'gemini-2.0-flash');
+            const customBaseUrl = ref(localStorage.getItem('grooow_base_url') || '');
 
-            const fileInput = ref(null), imageFile = ref(null), imagePreview = ref(''), description = ref(''), isGenerating = ref(false), generatedText = ref(''), dragOver = ref(false), copySuccess = ref(false);
-            
-            const triggerFileInput = () => { if(!imagePreview.value) fileInput.value.click(); };
+            const description = ref('');
+            const fileInput = ref(null);
+            const imageFile = ref(null);
+            const imagePreview = ref('');
+            const dragOver = ref(false);
+
+            const selectedCategory = ref('chao');
+            const selectedTone = ref('热情闺蜜');
+            const emojiDensity = ref('high');
+
+            const isGenerating = ref(false);
+            const rawResponse = ref('');
+            const parsedResult = ref(null);
+            const errorMessage = ref('');
+            const copiedField = ref('');
+
+            const showSettingsModal = ref(false);
+            const showInstallModal = ref(false);
+            const showHistoryModal = ref(false);
+            const historyList = ref(JSON.parse(localStorage.getItem('grooow_history') || '[]'));
+
+            const categories = [
+                { id: 'chao', name: '种草安利', icon: '🔥' },
+                { id: 'tan', name: '探店打卡', icon: '📸' },
+                { id: 'gan', name: '干货教程', icon: '💡' },
+                { id: 'bi', name: '避坑指南', icon: '⚠️' },
+                { id: 'vlog', name: '日常记录', icon: '🌿' },
+                { id: 'wear', name: '穿搭美妆', icon: '👗' },
+                { id: 'work', name: '搞钱职场', icon: '💰' },
+            ];
+
+            onMounted(() => {
+                // If API key is empty on load, popup settings
+                if (!apiKey.value) {
+                    setTimeout(() => { showSettingsModal.value = true; }, 500);
+                }
+            });
+
+            // File Handlers
+            const triggerFileInput = () => fileInput.value && fileInput.value.click();
             const handleImageUpload = (e) => processFile(e.target.files[0]);
-            const handleDrop = (e) => { dragOver.value = false; processFile(e.dataTransfer.files[0]); };
-            
+            const handleDrop = (e) => {
+                dragOver.value = false;
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    processFile(e.dataTransfer.files[0]);
+                }
+            };
             const processFile = (file) => {
                 if (file && file.type.startsWith('image/')) {
                     imageFile.value = file;
                     imagePreview.value = URL.createObjectURL(file);
-                } else alert('请上传有效的图片文件！');
+                } else {
+                    alert('请上传有效的图片文件！');
+                }
             };
-            
-            const clearImage = () => { imageFile.value = null; imagePreview.value = ''; if(fileInput.value) fileInput.value.value = ''; };
-            
+            const clearImage = () => {
+                imageFile.value = null;
+                imagePreview.value = '';
+                if (fileInput.value) fileInput.value.value = '';
+            };
+
             const fileToBase64 = (file) => {
                 return new Promise((resolve, reject) => {
                     const reader = new FileReader();
@@ -130,56 +608,250 @@
                 });
             };
 
+            // Settings
+            const saveSettings = () => {
+                apiKey.value = tempApiKey.value.trim();
+                localStorage.setItem('grooow_gemini_api_key', apiKey.value);
+                localStorage.setItem('grooow_model', selectedModel.value);
+                localStorage.setItem('grooow_base_url', customBaseUrl.value.trim());
+                showSettingsModal.value = false;
+            };
+
+            // Parse response into structured output
+            const parseOutput = (text) => {
+                let titles = [];
+                let body = '';
+                let tags = [];
+
+                // Simple JSON or Markdown block parser
+                const jsonMatch = text.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    try {
+                        const parsed = JSON.parse(jsonMatch[0]);
+                        return {
+                            titles: parsed.titles || ['爆款分享指南'],
+                            body: parsed.content || parsed.body || text,
+                            tags: parsed.tags || []
+                        };
+                    } catch (e) {
+                        // fallback to heuristic parsing
+                    }
+                }
+
+                // Split lines heuristic
+                const lines = text.split('\n');
+                let mode = 'body';
+                let bodyLines = [];
+
+                lines.forEach(line => {
+                    const trimmed = line.trim();
+                    if (trimmed.includes('标题') && (trimmed.includes('1') || trimmed.includes('备选') || trimmed.includes('：'))) {
+                        mode = 'titles';
+                    } else if (trimmed.includes('正文') || trimmed.includes('内容')) {
+                        mode = 'body';
+                    } else if (trimmed.includes('标签') || trimmed.includes('话题') || trimmed.includes('Tags')) {
+                        mode = 'tags';
+                    } else {
+                        if (mode === 'titles' && trimmed.match(/^[0-9一二三四五1-5][.、\s]/)) {
+                            titles.push(trimmed.replace(/^[0-9一二三四五1-5][.、\s]/, '').trim());
+                        } else if (mode === 'tags' || trimmed.startsWith('#')) {
+                            const foundTags = trimmed.match(/#[\u4e00-\u9fa5a-zA-Z0-9_-]+/g);
+                            if (foundTags) tags.push(...foundTags);
+                        } else {
+                            bodyLines.push(line);
+                        }
+                    }
+                });
+
+                if (titles.length === 0) {
+                    titles = ['✨ 今日份绝美分享 | 藏不住的宝藏好物', '🔥 亲测不踩雷！按头安利给大家', '💡 懂的都懂！后悔没早点发现'];
+                }
+                body = bodyLines.join('\n').trim() || text;
+
+                // extract tags from body if any
+                const bodyTags = body.match(/#[\u4e00-\u9fa5a-zA-Z0-9_-]+/g);
+                if (bodyTags && tags.length === 0) {
+                    tags = [...new Set(bodyTags)];
+                }
+
+                return { titles, body, tags };
+            };
+
+            // Main Generator Function
             const generateCopy = async () => {
-                if (API_KEY === '在这里填入你的_API_KEY') {
-                    alert('请先在代码中填入你的 API Key！');
+                if (!apiKey.value) {
+                    showSettingsModal.value = true;
+                    return;
+                }
+                if (!description.value.trim()) {
+                    alert('请先输入文案主题或核心卖点！');
                     return;
                 }
 
-                isGenerating.value = true; 
-                generatedText.value = ''; 
-                copySuccess.value = false;
-                
-                try {
-                    const promptText = `你是一个深谙小红书爆款逻辑的顶级文案专家。请根据我提供的描述（以及图片，如果有的话），为我生成小红书文案。
-                    
-                    【严格执行以下规则】：
-                    1. 绝对小红书风：带入真实博主的主观分享口吻，语气要充满活力与感染力。
-                    2. 灵魂 Emoji 排版：【大量并且巧妙地】在句首、句中和句末穿插 Emoji（如 ✨🔥📸💡🎀），让整个排版充满网感！
-                    3. 空行与留白：多用短句并频繁换行，使用恰当的符号作分界，视觉上必须要清爽透气。
-                    4. 拒绝废话与前缀：直接输出最终文案内容，绝不说“没问题”等客套话，不要带“标题：”、“正文：”等字眼。
-                    
-                    我的描述和要求是：${description.value}`;
+                isGenerating.value = true;
+                errorMessage.value = '';
+                parsedResult.value = null;
 
-                    const requestBody = { contents: [{ parts: [{ text: promptText }] }] };
+                try {
+                    const categoryObj = categories.find(c => c.id === selectedCategory.value) || { name: '爆款' };
+                    const densityPrompt = emojiDensity.value === 'high' 
+                        ? '大量并在句首句中句末穿插 Emoji（✨🔥📸💡🎀），排版具有超强网感' 
+                        : (emojiDensity.value === 'medium' ? '适度点缀 Emoji，保持生动亲切' : '精简 Emoji，保持干净利落');
+
+                    const systemPrompt = `你是一个深谙小红书 10w+ 爆款文案逻辑的顶级文案创作专家。
+请根据用户提供的主题描述与图片，创作极具吸引力的小红书文案。
+
+【场景与人设】：
+- 场景分类：${categoryObj.name}
+- 博主语气：${selectedTone.value}
+- 排版风格：${densityPrompt}，善用短句，多换行留白，透气感强，杜绝大段死板文字。
+
+【输出格式要求】：
+请以纯 JSON 格式输出，不要有任何 markdown 代码块外部的废话，JSON 格式如下：
+{
+  "titles": [
+    "🔥 标题1 (引发好奇/制造反差/加入数字/痛点共鸣)",
+    "✨ 标题2 (闺蜜私藏/真实体验/情绪价值)",
+    "💡 标题3 (干货提炼/保姆级攻略)",
+    "📸 标题4 (场景带入/视觉冲击)"
+  ],
+  "content": "这里是排版优美的正文内容...",
+  "tags": ["#小红书爆款笔记", "#好物推荐", "#生活日常", "#宝藏分享"]
+}
+
+用户创作需求与描述：${description.value}`;
+
+                    const requestBody = {
+                        contents: [{
+                            parts: [{ text: systemPrompt }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.8,
+                            responseMimeType: "application/json"
+                        }
+                    };
 
                     if (imageFile.value) {
                         const base64Data = await fileToBase64(imageFile.value);
                         requestBody.contents[0].parts.push({
-                            inline_data: { mime_type: imageFile.value.type, data: base64Data }
+                            inline_data: {
+                                mime_type: imageFile.value.type,
+                                data: base64Data
+                            }
                         });
                     }
 
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
+                    const baseUrl = customBaseUrl.value.trim().replace(/\/+$/, '') || 'https://generativelanguage.googleapis.com';
+                    const modelName = selectedModel.value || 'gemini-2.0-flash';
+                    const endpoint = `${baseUrl}/v1beta/models/${modelName}:generateContent?key=${apiKey.value}`;
+
+                    const res = await fetch(endpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(requestBody)
                     });
 
-                    const data = await response.json();
+                    const data = await res.json();
 
-                    if (data.error) throw new Error(data.error.message);
-                    generatedText.value = data.candidates[0].content.parts[0].text;
+                    if (!res.ok || data.error) {
+                        let errText = data.error?.message || `网络请求失败 (${res.status})`;
+                        if (data.error?.message?.includes('leaked')) {
+                            errText = '该 API Key 已被 Google 报告泄露失效，请在设置中更换新的 Key。';
+                        } else if (data.error?.code === 400 || data.error?.status === 'INVALID_ARGUMENT') {
+                            errText = '请求参数错误或模型不可用：' + data.error.message;
+                        }
+                        throw new Error(errText);
+                    }
 
-                } catch (error) {
-                    console.error('AI 生成出错:', error);
-                    generatedText.value = "抱歉，生成失败了。错误信息：" + error.message;
+                    const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                    if (!candidateText) throw new Error('AI 未能生成有效文本，请重试。');
+
+                    rawResponse.value = candidateText;
+                    parsedResult.value = parseOutput(candidateText);
+
+                    // Save to history
+                    const historyItem = {
+                        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        prompt: description.value,
+                        category: categoryObj.name,
+                        result: parsedResult.value
+                    };
+                    historyList.value.unshift(historyItem);
+                    if (historyList.value.length > 20) historyList.value.pop();
+                    localStorage.setItem('grooow_history', JSON.stringify(historyList.value));
+
+                } catch (err) {
+                    console.error('Generation error:', err);
+                    errorMessage.value = err.message || '生成失败，请检查网络连接或 API Key 设置。';
                 } finally {
                     isGenerating.value = false;
                 }
             };
 
-            const copyText = async () => {
+            const quickRefine = (instruction) => {
+                description.value += `\n【优化要求】：${instruction}`;
+                generateCopy();
+            };
+
+            // Copy Helpers
+            const copySingleText = async (text, fieldKey) => {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    copiedField.value = fieldKey;
+                    setTimeout(() => { if (copiedField.value === fieldKey) copiedField.value = ''; }, 2000);
+                } catch (err) {
+                    alert('复制失败，请长按文本手动复制。');
+                }
+            };
+
+            const copyFullPost = () => {
+                if (!parsedResult.value) return;
+                const title = parsedResult.value.titles?.[0] || '';
+                const body = parsedResult.value.body || '';
+                const tags = parsedResult.value.tags?.map(t => t.startsWith('#') ? t : '#' + t).join(' ') || '';
+                const full = `${title}\n\n${body}\n\n${tags}`;
+                copySingleText(full, 'all');
+            };
+
+            // History Operations
+            const loadHistoryItem = (item) => {
+                parsedResult.value = item.result;
+                description.value = item.prompt;
+                showHistoryModal.value = false;
+            };
+            const deleteHistoryItem = (idx) => {
+                historyList.value.splice(idx, 1);
+                localStorage.setItem('grooow_history', JSON.stringify(historyList.value));
+            };
+            const clearHistory = () => {
+                historyList.value = [];
+                localStorage.removeItem('grooow_history');
+            };
+
+            return {
+                apiKey, tempApiKey, selectedModel, customBaseUrl, saveSettings,
+                description, fileInput, imagePreview, dragOver,
+                selectedCategory, selectedTone, emojiDensity, categories,
+                isGenerating, parsedResult, errorMessage, copiedField,
+                showSettingsModal, showInstallModal, showHistoryModal, historyList,
+                triggerFileInput, handleImageUpload, handleDrop, clearImage,
+                generateCopy, quickRefine, copySingleText, copyFullPost,
+                loadHistoryItem, deleteHistoryItem, clearHistory
+            };
+        }
+    }).mount('#app');
+
+    // Register Service Worker for PWA (Add to Home Screen)
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('ServiceWorker registered:', reg.scope))
+                .catch(err => console.log('ServiceWorker failed:', err));
+        });
+    }
+</script>
+</body>
+</html>      const copyText = async () => {
                 try { await navigator.clipboard.writeText(generatedText.value); copySuccess.value = true; setTimeout(() => copySuccess.value = false, 2000); } 
                 catch (err) { alert('复制失败，请手动复制。'); }
             };
